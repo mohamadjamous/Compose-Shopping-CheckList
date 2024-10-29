@@ -1,25 +1,36 @@
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.jetbrains.kotlin.android)
+    id 'com.android.application'
+    id 'kotlin-android'
+    id "org.jetbrains.kotlin.kapt"
+    id 'kotlin-allopen'
+    id 'kotlin-noarg'
+    id 'com.google.devtools.ksp'
 }
 
+allOpen {
+    annotation 'com.example.composeshoppingchecklist.testing.OpenClass'
+}
+noArg {
+    annotation 'com.example.composeshoppingchecklist.testing.NoArgClass'
+}
 android {
-    namespace 'com.example.composeshoppingchecklist'
     compileSdk 34
-
     defaultConfig {
         applicationId "com.example.composeshoppingchecklist"
-        minSdk 24
-        targetSdk 34
+        minSdkVersion 24
+        targetSdkVersion 34
         versionCode 1
         versionName "1.0"
-
+        vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables {
-            useSupportLibrary true
-        }
     }
-
+    sourceSets {
+        String sharedTestDir = 'src/sharedTest/java'
+        String debugDir = 'src/debug/java'
+        main.java.srcDirs += debugDir
+        test.java.srcDirs += sharedTestDir
+        androidTest.java.srcDirs += sharedTestDir
+    }
     buildTypes {
         release {
             minifyEnabled false
@@ -30,37 +41,119 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
-    kotlinOptions {
-        jvmTarget = '1.8'
+    kotlin {
+        jvmToolchain(8)
     }
     buildFeatures {
         compose true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion '1.5.1'
+        kotlinCompilerExtensionVersion "$versions.compose_compiles_version"
     }
-    packaging {
+    testOptions {
+        animationsDisabled = true
+        unitTests.returnDefaultValues = true
+    }
+    packagingOptions {
+        jniLibs {
+            pickFirsts += ['META-INF/*']
+        }
         resources {
-            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+            pickFirsts += ['META-INF/*']
         }
     }
+    namespace 'com.example.composeshoppingchecklist'
 }
 
 dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "org.jetbrains.kotlin:kotlin-reflect:$versions.kotlin"
+    implementation "androidx.appcompat:appcompat:$versions.support"
+    implementation "androidx.activity:activity-ktx:$versions.activity_ktx"
+    implementation "androidx.core:core-ktx:$versions.core_ktx"
+    implementation "androidx.preference:preference-ktx:$versions.preference"
+    implementation "androidx.constraintlayout:constraintlayout:$versions.constraint_layout"
+    implementation "com.google.android.material:material:$versions.material"
 
-    implementation libs.androidx.core.ktx
-    implementation libs.androidx.lifecycle.runtime.ktx
-    implementation libs.androidx.activity.compose
-    implementation platform(libs.androidx.compose.bom)
-    implementation libs.androidx.ui
-    implementation libs.androidx.ui.graphics
-    implementation libs.androidx.ui.tooling.preview
-    implementation libs.androidx.material3
-    testImplementation libs.junit
-    androidTestImplementation libs.androidx.junit
-    androidTestImplementation libs.androidx.espresso.core
-    androidTestImplementation platform(libs.androidx.compose.bom)
-    androidTestImplementation libs.androidx.ui.test.junit4
-    debugImplementation libs.androidx.ui.tooling
-    debugImplementation libs.androidx.ui.test.manifest
+    //Dex
+    implementation "androidx.multidex:multidex:$versions.multidex"
+    // Compose
+    implementation "androidx.compose.compiler:compiler:$versions.compose_compiles_version"
+    implementation "androidx.activity:activity-compose:$versions.compose_activity"
+    implementation "androidx.compose.ui:ui:$versions.compose_version"
+    implementation "androidx.compose.ui:ui-tooling:$versions.compose_version"
+    implementation "androidx.compose.material:material:$versions.compose_version"
+    implementation "androidx.compose.material:material-icons-core:$versions.compose_version"
+    implementation "androidx.compose.material:material-icons-extended:$versions.compose_version"
+    implementation "androidx.compose.runtime:runtime-livedata:$versions.compose_version"
+//    implementation "androidx.compose.runtime:runtime-rxjava2:$versions.compose_version"
+
+    //Koin
+    implementation "io.insert-koin:koin-android:$versions.koin"
+
+    //Lifecycle
+    implementation "androidx.lifecycle:lifecycle-extensions:$versions.lifecycleExt"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$versions.lifecycle"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$versions.lifecycle"
+
+    //Coroutines
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$versions.coroutine"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$versions.coroutine"
+
+    //Room
+    implementation "androidx.room:room-runtime:$versions.room"
+    ksp "androidx.room:room-compiler:$versions.room"
+
+    //Test
+    testImplementation "androidx.arch.core:core-testing:$versions.arch_core"
+    testImplementation "com.google.truth:truth:$versions.truth"
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$versions.coroutine"
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$versions.coroutine"
+    testImplementation "org.mockito:mockito-core:$versions.mockito"
+    testImplementation "org.mockito:mockito-inline:$versions.mockito_inline"
+    testImplementation "junit:junit:$versions.junit"
+    testImplementation "org.robolectric:annotations:$versions.robolectric"
+    testImplementation "org.robolectric:robolectric:$versions.robolectric"
+
+    //Android Test
+    androidTestImplementation "androidx.compose.ui:ui-test:$versions.compose_version"
+    androidTestImplementation "androidx.compose.ui:ui-test-junit4:$versions.compose_version"
+    debugImplementation "androidx.compose.ui:ui-test-manifest:$versions.compose_version"
+    implementation("androidx.fragment:fragment-testing:$versions.fragment_testing", {
+        exclude group: 'androidx.test', module: 'core'
+    })
+    implementation "androidx.fragment:fragment-ktx:$versions.fragment"
+    androidTestImplementation "com.google.truth:truth:$versions.truth"
+    androidTestImplementation 'androidx.annotation:annotation:1.7.0'
+    androidTestImplementation "androidx.arch.core:core-testing:$versions.arch_core"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$versions.espresso"
+    androidTestImplementation "androidx.test.espresso:espresso-contrib:$versions.espresso"
+    androidTestImplementation "androidx.test.espresso:espresso-intents:$versions.espresso"
+    androidTestImplementation "androidx.test.espresso.idling:idling-concurrent:$versions.espresso"
+    androidTestImplementation "androidx.test:core:$versions.atsl_core"
+    androidTestImplementation "androidx.test.ext:junit:$versions.atsl_junit"
+    androidTestImplementation "androidx.test.ext:junit-ktx:$versions.atsl_junit"
+    androidTestImplementation "androidx.test:monitor:$versions.atsl_monitor"
+    androidTestImplementation "androidx.test:rules:$versions.atsl_rules"
+    androidTestImplementation "androidx.test:runner:$versions.atsl_runner"
+    androidTestImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$versions.coroutine"
+    androidTestImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:$versions.coroutine"
+    androidTestImplementation "org.mockito:mockito-android:$versions.mockito"
+    androidTestImplementation "org.mockito:mockito-core:$versions.mockito"
+    androidTestImplementation "org.robolectric:annotations:$versions.robolectric"
+}
+
+// we need all open to run tests which we enable only for debug builds.
+project.tasks.whenTaskAdded {
+    if (it.name == "testReleaseUnitTest") {
+        it.enabled = false
+    }
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    kotlinOptions {
+        jvmTarget = '1.8'
+        freeCompilerArgs += ["-Xallow-jvm-ir-dependencies", "-Xskip-prerelease-check"]
+    }
 }
